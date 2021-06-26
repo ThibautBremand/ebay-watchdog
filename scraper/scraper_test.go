@@ -42,3 +42,31 @@ func TestParseItem(t *testing.T) {
 		t.Errorf("expected %+v but got %+v", exp, got)
 	}
 }
+
+func TestParseDate(t *testing.T) {
+	t.Run("US format", func(t *testing.T) {
+		str := "Jun-26 06:21"
+		got, err := parseDate(str)
+		if err != nil {
+			t.Errorf("error while parsing date: %v", err)
+		}
+
+		exp := time.Date(time.Now().Year(), time.Month(6), 26, 6, 21, 00, 0, time.UTC)
+		if exp != got {
+			t.Errorf("expected %v but got %v", exp, got)
+		}
+	})
+
+	t.Run("UK format", func(t *testing.T) {
+		str := "26-Jun 15:39"
+		got, err := parseDate(str)
+		if err != nil {
+			t.Errorf("error while parsing date: %v", err)
+		}
+
+		exp := time.Date(time.Now().Year(), time.Month(6), 26, 15, 39, 00, 0, time.UTC)
+		if exp != got {
+			t.Errorf("expected %v but got %v", exp, got)
+		}
+	})
+}

@@ -34,7 +34,7 @@ url = "https://www.ebay.com/sch/i.html?_from=R40&_nkw=macbook+pro&_sacat=0&_sop=
 
 **Important notes:**
 - You need to use urls with the **Time: newly listed** enabled, e.g. urls ending with `&_sop=10`.
-- You need to use `ebay.com` urls, since the program parses dates and can only parse dates in english.
+- You need to use `ebay.com` or `ebay.co.uk` urls, since the program parses dates and can only parse dates in english. It handles both US and UK dates formats.
 
 Other parameters:  
 - `delay`: period, in seconds, between two scrapings. Keep it reasonably high.
