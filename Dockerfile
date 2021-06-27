@@ -1,5 +1,4 @@
-# Start from the latest golang base image
-FROM golang:latest
+FROM golang:buster
 
 # Set the Current Working Directory inside the container
 WORKDIR /app
