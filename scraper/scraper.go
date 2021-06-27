@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+const newListingPrefix = "New listing"
+
 type Listing struct {
 	URL      string    `json:"url"`
 	Title    string    `json:"title"`
@@ -103,6 +105,10 @@ func parseItem(
 	}
 
 	title := sel.Find(".s-item__title").Text()
+	if strings.HasPrefix(title, newListingPrefix) {
+		title = strings.TrimPrefix(title, newListingPrefix)
+	}
+
 	subtitle := sel.Find(".s-item__subtitle").Text()
 
 	detailsSel := sel.Find(".s-item__details").Children()
