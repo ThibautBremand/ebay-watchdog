@@ -8,6 +8,7 @@ import (
 	"ebay-watchdog/web"
 	"github.com/spf13/viper"
 	"log"
+	"strings"
 	"text/template"
 	"time"
 )
@@ -75,6 +76,9 @@ func sendToTelegram(listings []scraper.Listing, tpl *template.Template) {
 		} else {
 			msg = buf.String()
 		}
+
+		// Double quotes are not correctly parsed by Telegram
+		msg = strings.ReplaceAll(msg, `"`, "")
 
 		err = web.SendTelegramMessage(
 			viper.GetString("TELEGRAM_TOKEN"),
