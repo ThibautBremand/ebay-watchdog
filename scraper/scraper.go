@@ -94,10 +94,14 @@ func parseItem(
 		return nil, true
 	}
 
-	url, exists := itemSel.Attr("href")
+	rawURL, exists := itemSel.Attr("href")
 	if !exists {
 		return nil, true
 	}
+
+	// Listing URLs with amdata generate different URLs for the same listings
+	// Removing the amdata allows us to determine if a listing has already been scraped or not.
+	url := strings.Split(rawURL, "&amdata")[0]
 
 	if isKnownURL && scraped[searchUrl].URL == url {
 		log.Println("Found nothing new")
