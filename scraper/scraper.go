@@ -120,7 +120,7 @@ func parseItem(
 	price := detailsSel.Find(".s-item__price").Text()
 	date := detailsSel.Find(".s-item__listingDate").Text()
 
-	t, err := parseDate(date)
+	t, err := parseDate(date, url)
 	if err != nil {
 		log.Println("error while parsing date", date, err)
 		return nil, false
@@ -151,36 +151,4 @@ func parseItem(
 	}
 
 	return &listing, true
-}
-
-// parseDate returns a time.Time from the given date as string. It handles dates from eBay listings in US english and
-// UK english format.
-//
-// US example: Jun-26 06:21
-// UK example: 26-Jun 15:39
-func parseDate(str string) (time.Time, error) {
-	split := strings.Split(str, " ")
-	if len(split) < 2 {
-		return time.Time{}, fmt.Errorf("error while parsing date %s", str)
-	}
-
-	first := strings.Split(split[0], "-")
-	if len(first) < 2 {
-		return time.Time{}, fmt.Errorf("error while parsing date %s", str)
-	}
-
-	reordered := fmt.Sprintf("%s %s", first[0], first[1])
-	if len(first[0]) == 3 {
-		reordered = fmt.Sprintf("%s %s", first[1], first[0])
-	}
-
-	year, _, _ := time.Now().Date()
-	fullDate := fmt.Sprintf("%s %d %s", reordered, year, split[1])
-
-	t, err := time.Parse("2 Jan 2006 15:04", fullDate)
-	if err != nil {
-		return time.Time{}, fmt.Errorf("error while parsing date %s: %v", str, err)
-	}
-
-	return t, nil
 }
