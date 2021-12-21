@@ -35,6 +35,7 @@ func TestParseItem(t *testing.T) {
 			Subtitle: "Brand New",
 			Price:    "$19.99",
 			Date:     time.Time{},
+			ID:       "402943017690?hash=item5dd14682da:g:RdAAAOSwudVg0-jc",
 		},
 	}
 

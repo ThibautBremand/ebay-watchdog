@@ -19,6 +19,7 @@ type Listing struct {
 	Subtitle string    `json:"subtitle"`
 	Price    string    `json:"price"`
 	Date     time.Time `json:"date"`
+	ID       string    `json:"id"`
 }
 
 // Scrape starts the scraping for the given []config.SearchItem.
@@ -38,7 +39,7 @@ func Scrape(
 		return nil, nil, fmt.Errorf("could not start scraping: %v", err)
 	}
 
-	log.Println("Got new listings!", len(listings))
+	log.Printf("Got %d new listings!\n", len(listings))
 	return listings, lastItems, nil
 }
 
@@ -101,9 +102,9 @@ func parseItem(
 
 	// Listing URLs with amdata generate different URLs for the same listings
 	// Removing the amdata allows us to determine if a listing has already been scraped or not.
-	url := strings.Split(rawURL, "&amdata")[0]
+	URL := strings.Split(rawURL, "&amdata")[0]
 
-	if isKnownURL && scraped[searchUrl].URL == url {
+	if isKnownURL && scraped[searchUrl].URL == URL {
 		log.Println("Found nothing new")
 		return nil, false
 	}
@@ -120,7 +121,7 @@ func parseItem(
 	price := detailsSel.Find(".s-item__price").Text()
 	date := detailsSel.Find(".s-item__listingDate").Text()
 
-	t, err := parseDate(date, url)
+	t, err := parseDate(date, URL)
 	if err != nil {
 		log.Println("error while parsing date", date, err)
 		return nil, false
@@ -133,12 +134,15 @@ func parseItem(
 		return nil, false
 	}
 
+	split := strings.Split(URL, "/")
+
 	listing := Listing{
-		URL:      url,
+		URL:      URL,
 		Title:    title,
 		Subtitle: subtitle,
 		Price:    price,
 		Date:     t,
+		ID:       split[len(split)-1],
 	}
 
 	log.Println("Got listing details")
