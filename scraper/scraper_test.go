@@ -35,6 +35,7 @@ func TestParseItem(t *testing.T) {
 			Subtitle: "Brand New",
 			Price:    "$19.99",
 			Date:     time.Time{},
+			ID:       "402943017690?hash=item5dd14682da:g:RdAAAOSwudVg0-jc",
 		},
 	}
 
@@ -43,30 +44,43 @@ func TestParseItem(t *testing.T) {
 	}
 }
 
-func TestParseDate(t *testing.T) {
-	t.Run("US format", func(t *testing.T) {
-		str := "Jun-26 06:21"
-		got, err := parseDate(str)
-		if err != nil {
-			t.Errorf("error while parsing date: %v", err)
-		}
+func TestSetDomain(t *testing.T) {
+	URL := "https://www.ebay.com/itm/402943017690?hash=item5dd14682da:g:RdAAAOSwudVg0-jc"
+	domain := "co.uk"
 
-		exp := time.Date(time.Now().Year(), time.Month(6), 26, 6, 21, 00, 0, time.UTC)
-		if exp != got {
-			t.Errorf("expected %v but got %v", exp, got)
-		}
-	})
+	exp := "https://www.ebay.co.uk/itm/402943017690?hash=item5dd14682da:g:RdAAAOSwudVg0-jc"
+	got, err := setDomain(URL, domain)
+	if err != nil {
+		t.Errorf("error while setting domain: %s", err)
+	}
 
-	t.Run("UK format", func(t *testing.T) {
-		str := "26-Jun 15:39"
-		got, err := parseDate(str)
-		if err != nil {
-			t.Errorf("error while parsing date: %v", err)
-		}
+	if exp != got {
+		t.Errorf("expected %s but got %s", exp, got)
+	}
+}
 
-		exp := time.Date(time.Now().Year(), time.Month(6), 26, 15, 39, 00, 0, time.UTC)
-		if exp != got {
-			t.Errorf("expected %v but got %v", exp, got)
-		}
-	})
+func TestParseLocDomain(t *testing.T) {
+	URL := "https://www.ebay.fr/itm/393802831789?hash=item5bb07a57ad:g:q1MAAOSwCRthvdNa"
+	got, err := parseLocDomain(URL)
+	exp := "fr"
+
+	if err != nil {
+		t.Errorf("received error %s", err)
+	}
+
+	if got != exp {
+		t.Errorf("expected %s but got %s", exp, got)
+	}
+
+	URL = "https://www.ebay.co.uk/itm/393802831789?hash=item5bb07a57ad:g:q1MAAOSwCRthvdNa"
+	got, err = parseLocDomain(URL)
+	exp = "co.uk"
+
+	if err != nil {
+		t.Errorf("received error %s", err)
+	}
+
+	if got != exp {
+		t.Errorf("expected %s but got %s", exp, got)
+	}
 }

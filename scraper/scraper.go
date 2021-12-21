@@ -19,6 +19,7 @@ type Listing struct {
 	Subtitle string    `json:"subtitle"`
 	Price    string    `json:"price"`
 	Date     time.Time `json:"date"`
+	ID       string    `json:"id"`
 }
 
 // Scrape starts the scraping for the given []config.SearchItem.
@@ -38,7 +39,7 @@ func Scrape(
 		return nil, nil, fmt.Errorf("could not start scraping: %v", err)
 	}
 
-	log.Println("Got new listings!", len(listings))
+	log.Printf("Got %d new listings!\n", len(listings))
 	return listings, lastItems, nil
 }
 
@@ -54,29 +55,58 @@ func scrapeListings(
 	lastItems := make(map[string]Listing)
 
 	for _, searchItem := range searchItems {
-		searchUrl := searchItem.URL
 
-		log.Println("Searching with", searchUrl)
-		doc, err := web.Get(searchUrl)
-		if err != nil {
-			log.Println("could not make request to SearchItem page", err)
-			continue
-		}
+		// Keep in memory the id of the parsed listings, so we do not send the same listing twice when checking
+		// multiple domains.
+		currentSearchItems := make(map[string]int)
 
-		isFirst := true
-
-		doc.Find("div.s-item__info").EachWithBreak(func(i int, sel *goquery.Selection) bool {
-			listing, b := parseItem(sel, scraped, searchUrl)
-			if listing != nil {
-				pulledListings = append(pulledListings, *listing)
-				if isFirst {
-					lastItems[searchUrl] = *listing
-					isFirst = false
-				}
+		if searchItem.Domains == nil || len(searchItem.Domains) == 0 {
+			domain, err := parseLocDomain(searchItem.URL)
+			if err != nil {
+				return nil, nil, fmt.Errorf("could not get domain from url %s: %s", searchItem.URL, err)
 			}
 
-			return b
-		})
+			searchItem.Domains = []string{domain}
+		}
+
+		for _, domain := range searchItem.Domains {
+			searchUrl, err := setDomain(searchItem.URL, domain)
+			if err != nil {
+				return nil, nil, fmt.Errorf("could not set domain %s for url %s: %s", domain, searchItem.URL, err)
+			}
+
+			log.Printf("Searching with url %s (domain %s)\n", searchUrl, domain)
+			doc, err := web.Get(searchUrl)
+			if err != nil {
+				log.Println("could not make request to SearchItem page", err)
+				continue
+			}
+
+			isFirst := true
+
+			doc.Find("div.s-item__info").EachWithBreak(func(i int, sel *goquery.Selection) bool {
+				listing, b := parseItem(sel, scraped, searchUrl)
+				if listing != nil {
+					_, isKnownID := currentSearchItems[listing.ID]
+					if !isKnownID {
+						currentSearchItems[listing.ID] = 1
+						pulledListings = append(pulledListings, *listing)
+						if isFirst {
+							lastItems[searchUrl] = *listing
+
+							isFirst = false
+						}
+					} else {
+						lastItems[searchUrl] = *listing
+					}
+				}
+
+				return b
+			})
+
+			// We space each queries just in case, to prevent getting throttled
+			time.Sleep(2 * time.Second)
+		}
 	}
 
 	return pulledListings, lastItems, nil
@@ -101,9 +131,9 @@ func parseItem(
 
 	// Listing URLs with amdata generate different URLs for the same listings
 	// Removing the amdata allows us to determine if a listing has already been scraped or not.
-	url := strings.Split(rawURL, "&amdata")[0]
+	URL := strings.Split(rawURL, "&amdata")[0]
 
-	if isKnownURL && scraped[searchUrl].URL == url {
+	if isKnownURL && scraped[searchUrl].URL == URL {
 		log.Println("Found nothing new")
 		return nil, false
 	}
@@ -120,7 +150,7 @@ func parseItem(
 	price := detailsSel.Find(".s-item__price").Text()
 	date := detailsSel.Find(".s-item__listingDate").Text()
 
-	t, err := parseDate(date)
+	t, err := parseDate(date, URL)
 	if err != nil {
 		log.Println("error while parsing date", date, err)
 		return nil, false
@@ -133,12 +163,15 @@ func parseItem(
 		return nil, false
 	}
 
+	split := strings.Split(URL, "/")
+
 	listing := Listing{
-		URL:      url,
+		URL:      URL,
 		Title:    title,
 		Subtitle: subtitle,
 		Price:    price,
 		Date:     t,
+		ID:       split[len(split)-1],
 	}
 
 	log.Println("Got listing details")
@@ -153,34 +186,27 @@ func parseItem(
 	return &listing, true
 }
 
-// parseDate returns a time.Time from the given date as string. It handles dates from eBay listings in US english and
-// UK english format.
-//
-// US example: Jun-26 06:21
-// UK example: 26-Jun 15:39
-func parseDate(str string) (time.Time, error) {
-	split := strings.Split(str, " ")
-	if len(split) < 2 {
-		return time.Time{}, fmt.Errorf("error while parsing date %s", str)
+// setDomain replaces the top level domain of the given URL by the given domain, and returns the new URL.
+func setDomain(URL string, domain string) (string, error) {
+	split := strings.Split(URL, "/")
+
+	if len(split) < 3 {
+		return "", fmt.Errorf("could not extract domain from URL %s", URL)
 	}
 
-	first := strings.Split(split[0], "-")
-	if len(first) < 2 {
-		return time.Time{}, fmt.Errorf("error while parsing date %s", str)
+	split[2] = fmt.Sprintf("%s%s", "www.ebay.", domain)
+
+	return strings.Join(split, "/"), nil
+}
+
+// parseLocDomain returns the location domain from the given listing URL.
+// e.g. com, co.uk, fr, etc.
+func parseLocDomain(URL string) (string, error) {
+	split := strings.Split(URL, "/")
+
+	if len(split) < 3 {
+		return "", fmt.Errorf("could not extract location domain from URL %s", URL)
 	}
 
-	reordered := fmt.Sprintf("%s %s", first[0], first[1])
-	if len(first[0]) == 3 {
-		reordered = fmt.Sprintf("%s %s", first[1], first[0])
-	}
-
-	year, _, _ := time.Now().Date()
-	fullDate := fmt.Sprintf("%s %d %s", reordered, year, split[1])
-
-	t, err := time.Parse("2 Jan 2006 15:04", fullDate)
-	if err != nil {
-		return time.Time{}, fmt.Errorf("error while parsing date %s: %v", str, err)
-	}
-
-	return t, nil
+	return strings.Replace(split[2], "www.ebay.", "", 1), nil
 }
