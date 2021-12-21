@@ -54,12 +54,11 @@ func scrapeListings(
 	var pulledListings []Listing
 	lastItems := make(map[string]Listing)
 
+	// Keep in memory the id of the parsed listings, so we do not send the same listing twice when checking
+	// multiple domains.
+	currentSearchItems := make(map[string]int)
+
 	for _, searchItem := range searchItems {
-
-		// Keep in memory the id of the parsed listings, so we do not send the same listing twice when checking
-		// multiple domains.
-		currentSearchItems := make(map[string]int)
-
 		if searchItem.Domains == nil || len(searchItem.Domains) == 0 {
 			domain, err := parseLocDomain(searchItem.URL)
 			if err != nil {
@@ -91,13 +90,12 @@ func scrapeListings(
 					if !isKnownID {
 						currentSearchItems[listing.ID] = 1
 						pulledListings = append(pulledListings, *listing)
-						if isFirst {
-							lastItems[searchUrl] = *listing
+					}
 
-							isFirst = false
-						}
-					} else {
+					if isFirst {
 						lastItems[searchUrl] = *listing
+
+						isFirst = false
 					}
 				}
 
