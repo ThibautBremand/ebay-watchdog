@@ -75,7 +75,7 @@ func scrapeListings(
 				return nil, nil, fmt.Errorf("could not set domain %s for url %s: %s", domain, searchItem.URL, err)
 			}
 
-			log.Println("Searching with", searchUrl)
+			log.Printf("Searching with url %s (domain %s)\n", searchUrl, domain)
 			doc, err := web.Get(searchUrl)
 			if err != nil {
 				log.Println("could not make request to SearchItem page", err)
