@@ -81,15 +81,3 @@ func parseDateByLocDomain(date string, URL string) (time.Time, error) {
 
 	return t, nil
 }
-
-// parseLocDomain returns the location domain from the given listing URL.
-// e.g. com, co.uk, fr, etc.
-func parseLocDomain(URL string) (string, error) {
-	split := strings.Split(URL, "/")
-
-	if len(split) < 3 {
-		return "", fmt.Errorf("could not extract location domain from URL %s", URL)
-	}
-
-	return strings.Replace(split[2], "www.ebay.", "", 1), nil
-}

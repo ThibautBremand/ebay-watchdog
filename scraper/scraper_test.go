@@ -43,3 +43,44 @@ func TestParseItem(t *testing.T) {
 		t.Errorf("expected %+v but got %+v", exp, got)
 	}
 }
+
+func TestSetDomain(t *testing.T) {
+	URL := "https://www.ebay.com/itm/402943017690?hash=item5dd14682da:g:RdAAAOSwudVg0-jc"
+	domain := "co.uk"
+
+	exp := "https://www.ebay.co.uk/itm/402943017690?hash=item5dd14682da:g:RdAAAOSwudVg0-jc"
+	got, err := setDomain(URL, domain)
+	if err != nil {
+		t.Errorf("error while setting domain: %s", err)
+	}
+
+	if exp != got {
+		t.Errorf("expected %s but got %s", exp, got)
+	}
+}
+
+func TestParseLocDomain(t *testing.T) {
+	URL := "https://www.ebay.fr/itm/393802831789?hash=item5bb07a57ad:g:q1MAAOSwCRthvdNa"
+	got, err := parseLocDomain(URL)
+	exp := "fr"
+
+	if err != nil {
+		t.Errorf("received error %s", err)
+	}
+
+	if got != exp {
+		t.Errorf("expected %s but got %s", exp, got)
+	}
+
+	URL = "https://www.ebay.co.uk/itm/393802831789?hash=item5bb07a57ad:g:q1MAAOSwCRthvdNa"
+	got, err = parseLocDomain(URL)
+	exp = "co.uk"
+
+	if err != nil {
+		t.Errorf("received error %s", err)
+	}
+
+	if got != exp {
+		t.Errorf("expected %s but got %s", exp, got)
+	}
+}

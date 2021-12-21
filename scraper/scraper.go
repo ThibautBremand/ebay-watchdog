@@ -156,3 +156,28 @@ func parseItem(
 
 	return &listing, true
 }
+
+// setDomain replaces the top level domain of the given URL by the given domain, and returns the new URL.
+func setDomain(URL string, domain string) (string, error) {
+	split := strings.Split(URL, "/")
+
+	if len(split) < 3 {
+		return "", fmt.Errorf("could not extract domain from URL %s", URL)
+	}
+
+	split[2] = fmt.Sprintf("%s%s", "www.ebay.", domain)
+
+	return strings.Join(split, "/"), nil
+}
+
+// parseLocDomain returns the location domain from the given listing URL.
+// e.g. com, co.uk, fr, etc.
+func parseLocDomain(URL string) (string, error) {
+	split := strings.Split(URL, "/")
+
+	if len(split) < 3 {
+		return "", fmt.Errorf("could not extract location domain from URL %s", URL)
+	}
+
+	return strings.Replace(split[2], "www.ebay.", "", 1), nil
+}

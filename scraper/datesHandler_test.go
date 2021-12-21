@@ -95,29 +95,3 @@ func TestParseDateByLocDomain(t *testing.T) {
 		}
 	})
 }
-
-func TestParseLocDomain(t *testing.T) {
-	URL := "https://www.ebay.fr/itm/393802831789?hash=item5bb07a57ad:g:q1MAAOSwCRthvdNa"
-	got, err := parseLocDomain(URL)
-	exp := "fr"
-
-	if err != nil {
-		t.Errorf("received error %s", err)
-	}
-
-	if got != exp {
-		t.Errorf("expected %s but got %s", exp, got)
-	}
-
-	URL = "https://www.ebay.co.uk/itm/393802831789?hash=item5bb07a57ad:g:q1MAAOSwCRthvdNa"
-	got, err = parseLocDomain(URL)
-	exp = "co.uk"
-
-	if err != nil {
-		t.Errorf("received error %s", err)
-	}
-
-	if got != exp {
-		t.Errorf("expected %s but got %s", exp, got)
-	}
-}
