@@ -8,6 +8,7 @@ track-scraped-urls = true
 
 [[searches]]
 url = "your url here"
+domains = ["com", "co.uk"]
 
 [[searches]]
 url = "your url here"

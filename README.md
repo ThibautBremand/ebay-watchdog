@@ -6,7 +6,8 @@ Whenever a new listing appears on an eBay search page, you will be notified, on 
 
 ![watchdoge](https://user-images.githubusercontent.com/9871294/123490445-4d546a80-d614-11eb-9889-520df15e594e.jpg)
 
-This project is based on [this one](https://github.com/samjmckenzie/ebay-monitor), but reworked and simplified.  
+This project is based on [this one](https://github.com/samjmckenzie/ebay-monitor), but reworked, simplified and with 
+great new features.  
 
 ## Quick start
 - Make sure Golang is installed on your machine.
@@ -17,6 +18,8 @@ This project is based on [this one](https://github.com/samjmckenzie/ebay-monitor
 - Run `make run` to launch the program.
 
 ### Config.toml
+
+#### Search URLs
 To add a new url to scrape, add the following lines into the `config.toml` file:
 ```
 [[searches]]
@@ -32,13 +35,31 @@ url = "https://www.ebay.com/sch/i.html?_from=R40&_nkw=duct+tape&_sacat=0&_sop=10
 url = "https://www.ebay.com/sch/i.html?_from=R40&_nkw=macbook+pro&_sacat=0&_sop=10"
 ```
 
-**Important notes:**
+#### (Optional) Domains
+You can add multiple domains per search url.
+```
+[[searches]]
+url = "https://www.ebay.com/sch/i.html?_from=R40&_nkw=duct+tape&_sacat=0&_sop=10"
+domains = ["com","co.uk"]
+```
+
+That way, the scraper will first scrape the ebay.com url, then it will scrape the same url but with the .co.uk domain.
+It will then dedupe the listings to keep a list of unique listings.
+
+This is useful when you want to retrieve an exhaustive list of items, when some of them are only available in some 
+countries.
+
+If you do not set domains, only the provided url will be scraped as usual.
+
+#### Important notes
 - You need to use urls with the **Time: newly listed** enabled, e.g. urls ending with `&_sop=10`.
-- You need to use `ebay.com` or `ebay.co.uk` urls, since the program parses dates and can only parse dates in english. It handles both US and UK dates formats.
+- You need to use `ebay.com`, `ebay.co.uk` or `ebay.fr` urls and domains since these are the only formats that are
+handled by the program at the moment.
 
 Other parameters:  
-- `delay`: period, in seconds, between two scrapings. Keep it reasonably high.
-- `track-scraped-urls`: if set to `true`, read the cache at the beginning of the program.
+- `delay`: period, in seconds, between two scraping loops. Keep it reasonably high.
+- `track-scraped-urls`: if set to `true`, read the cache from `scraped.json` at the beginning of the program. If set to
+`false`, ignore the cache.
 
 ### Telegram and .env
 - First, you need to create a [Telegram account](https://desktop.telegram.org/).
