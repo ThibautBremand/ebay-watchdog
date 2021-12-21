@@ -55,29 +55,58 @@ func scrapeListings(
 	lastItems := make(map[string]Listing)
 
 	for _, searchItem := range searchItems {
-		searchUrl := searchItem.URL
 
-		log.Println("Searching with", searchUrl)
-		doc, err := web.Get(searchUrl)
-		if err != nil {
-			log.Println("could not make request to SearchItem page", err)
-			continue
-		}
+		// Keep in memory the id of the parsed listings, so we do not send the same listing twice when checking
+		// multiple domains.
+		currentSearchItems := make(map[string]int)
 
-		isFirst := true
-
-		doc.Find("div.s-item__info").EachWithBreak(func(i int, sel *goquery.Selection) bool {
-			listing, b := parseItem(sel, scraped, searchUrl)
-			if listing != nil {
-				pulledListings = append(pulledListings, *listing)
-				if isFirst {
-					lastItems[searchUrl] = *listing
-					isFirst = false
-				}
+		if searchItem.Domains == nil || len(searchItem.Domains) == 0 {
+			domain, err := parseLocDomain(searchItem.URL)
+			if err != nil {
+				return nil, nil, fmt.Errorf("could not get domain from url %s: %s", searchItem.URL, err)
 			}
 
-			return b
-		})
+			searchItem.Domains = []string{domain}
+		}
+
+		for _, domain := range searchItem.Domains {
+			searchUrl, err := setDomain(searchItem.URL, domain)
+			if err != nil {
+				return nil, nil, fmt.Errorf("could not set domain %s for url %s: %s", domain, searchItem.URL, err)
+			}
+
+			log.Println("Searching with", searchUrl)
+			doc, err := web.Get(searchUrl)
+			if err != nil {
+				log.Println("could not make request to SearchItem page", err)
+				continue
+			}
+
+			isFirst := true
+
+			doc.Find("div.s-item__info").EachWithBreak(func(i int, sel *goquery.Selection) bool {
+				listing, b := parseItem(sel, scraped, searchUrl)
+				if listing != nil {
+					_, isKnownID := currentSearchItems[listing.ID]
+					if !isKnownID {
+						currentSearchItems[listing.ID] = 1
+						pulledListings = append(pulledListings, *listing)
+						if isFirst {
+							lastItems[searchUrl] = *listing
+
+							isFirst = false
+						}
+					} else {
+						lastItems[searchUrl] = *listing
+					}
+				}
+
+				return b
+			})
+
+			// We space each queries just in case, to prevent getting throttled
+			time.Sleep(2 * time.Second)
+		}
 	}
 
 	return pulledListings, lastItems, nil
