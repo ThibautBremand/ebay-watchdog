@@ -34,7 +34,11 @@ func parseDate(str string, URL string) (time.Time, error) {
 	}
 
 	if len(month) > 3 {
-		month = month[:4]
+		month = firstN(month, 3)
+	}
+
+	if len(day) > 2 {
+		day = firstN(day, 2)
 	}
 
 	year, _, _ := time.Now().Date()
@@ -80,4 +84,16 @@ func parseDateByLocDomain(date string, URL string) (time.Time, error) {
 	}
 
 	return t, nil
+}
+
+// firstN returns the first n characters of a string, and it correctly counts the unicode characters as 1.
+func firstN(s string, n int) string {
+	i := 0
+	for j := range s {
+		if i == n {
+			return s[:j]
+		}
+		i++
+	}
+	return s
 }

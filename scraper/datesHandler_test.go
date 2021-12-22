@@ -49,49 +49,22 @@ func TestParseDate(t *testing.T) {
 	})
 }
 
-func TestParseDateByLocDomain(t *testing.T) {
-	t.Run("US format", func(t *testing.T) {
-		URL := "https://www.ebay.com/itm/393802831789?hash=item5bb07a57ad:g:q1MAAOSwCRthvdNa"
-		date := "20 dec 2021 11:30"
+func TestFirstN(t *testing.T) {
+	t.Run("Unicode", func(t *testing.T) {
+		got := firstN("世界 Hello", 1)
+		exp := "世"
 
-		got, err := parseDateByLocDomain(date, URL)
-		if err != nil {
-			t.Errorf("error while parsing date: %s", err)
-		}
-
-		exp := time.Date(time.Now().Year(), 12, 20, 11, 30, 0, 0, time.Local)
 		if exp != got {
-			t.Errorf("expected %v but got %v", exp, got)
+			t.Errorf("expected %s but got %s", exp, got)
 		}
 	})
 
-	t.Run("UK format", func(t *testing.T) {
-		URL := "https://www.ebay.co.uk/itm/393802831789?hash=item5bb07a57ad:g:q1MAAOSwCRthvdNa"
-		date := "20 dec 2021 11:30"
+	t.Run("Non unicode", func(t *testing.T) {
+		got := firstN("Hello World", 1)
+		exp := "H"
 
-		got, err := parseDateByLocDomain(date, URL)
-		if err != nil {
-			t.Errorf("error while parsing date: %s", err)
-		}
-
-		exp := time.Date(time.Now().Year(), 12, 20, 11, 30, 0, 0, time.Local)
 		if exp != got {
-			t.Errorf("expected %v but got %v", exp, got)
-		}
-	})
-
-	t.Run("FR format", func(t *testing.T) {
-		URL := "https://www.ebay.fr/itm/393802831789?hash=item5bb07a57ad:g:q1MAAOSwCRthvdNa"
-		date := "20 déc 2021 11:30"
-
-		got, err := parseDateByLocDomain(date, URL)
-		if err != nil {
-			t.Errorf("error while parsing date: %s", err)
-		}
-
-		exp := time.Date(time.Now().Year(), 12, 20, 11, 30, 0, 0, time.Local)
-		if exp != got {
-			t.Errorf("expected %v but got %v", exp, got)
+			t.Errorf("expected %s but got %s", exp, got)
 		}
 	})
 }
