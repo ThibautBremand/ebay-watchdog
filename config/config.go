@@ -7,7 +7,8 @@ import (
 )
 
 type SearchItem struct {
-	URL string
+	URL     string
+	Domains []string
 }
 
 // Load loads both the toml config and the .env file.
