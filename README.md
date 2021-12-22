@@ -53,8 +53,25 @@ If you do not set domains, only the provided url will be scraped as usual.
 
 #### Important notes
 - You need to use urls with the **Time: newly listed** enabled, e.g. urls ending with `&_sop=10`.
-- You need to use `ebay.com`, `ebay.co.uk` or `ebay.fr` urls and domains since these are the only formats that are
-handled by the program at the moment.
+- You need to use the following urls and domains since these are the only domains that are handled by the program at the 
+  moment.
+  - ebay.at
+  - ebay.ca
+  - ebay.ch
+  - ebay.co.uk
+  - ebay.com
+  - ebay.com.au
+  - ebay.com.my
+  - ebay.com.sg
+  - ebay.de
+  - ebay.es
+  - ebay.fr
+  - ebay.ie
+  - ebay.it
+  - ebay.nl
+  - ebay.ph
+  - ebay.pl
+    
 
 Other parameters:  
 - `delay`: period, in seconds, between two scraping loops. Keep it reasonably high.

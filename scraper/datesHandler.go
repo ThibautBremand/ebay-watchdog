@@ -20,13 +20,24 @@ func parseDate(str string, URL string) (time.Time, error) {
 		return time.Time{}, fmt.Errorf("error while parsing date %s", str)
 	}
 
-	first := strings.Split(split[0], "-")
-	if len(first) < 2 {
-		return time.Time{}, fmt.Errorf("error while parsing date %s", str)
+	dayMonth := make([]string, 0)
+	hours := split[1]
+	if len(split) == 2 {
+		dayMonth = strings.Split(split[0], "-")
+		if len(dayMonth) < 2 {
+			return time.Time{}, fmt.Errorf("error while parsing date %s", str)
+		}
+	} else if len(split) == 3 {
+		// When the day and month are not separated by a '-' but by a space.
+		dayMonth = append(dayMonth, split[0])
+		dayMonth = append(dayMonth, split[1])
+		hours = split[2]
+	} else {
+		return time.Time{}, fmt.Errorf("error: date %s is in unknown format and cannot be parsed", str)
 	}
 
-	day := first[0]
-	month := first[1]
+	day := dayMonth[0]
+	month := dayMonth[1]
 	if len(day) > len(month) {
 		temp := day
 		day = month
@@ -34,11 +45,15 @@ func parseDate(str string, URL string) (time.Time, error) {
 	}
 
 	if len(month) > 3 {
-		month = month[:4]
+		month = firstN(month, 3)
+	}
+
+	if len(day) > 2 {
+		day = firstN(day, 2)
 	}
 
 	year, _, _ := time.Now().Date()
-	fullDate := fmt.Sprintf("%s %s %d %s", day, month, year, split[1])
+	fullDate := fmt.Sprintf("%s %s %d %s", day, month, year, hours)
 
 	t, err := parseDateByLocDomain(fullDate, URL)
 	if err != nil {
@@ -59,12 +74,22 @@ func parseDateByLocDomain(date string, URL string) (time.Time, error) {
 
 	var locale monday.Locale
 	switch locDomain {
-	case "com":
+	case "com", "ca", "com.au", "com.sg", "com.my", "ph":
 		locale = monday.LocaleEnUS
-	case "co.uk":
+	case "co.uk", "ie":
 		locale = monday.LocaleEnGB
 	case "fr":
 		locale = monday.LocaleFrFR
+	case "de", "ch", "at":
+		locale = monday.LocaleDeDE
+	case "es":
+		locale = monday.LocaleEsES
+	case "it":
+		locale = monday.LocaleItIT
+	case "nl":
+		locale = monday.LocaleNlNL
+	case "pl":
+		locale = monday.LocalePlPL
 	default:
 		return time.Time{}, fmt.Errorf("unhandled loc domain: %s", locDomain)
 	}
@@ -80,4 +105,16 @@ func parseDateByLocDomain(date string, URL string) (time.Time, error) {
 	}
 
 	return t, nil
+}
+
+// firstN returns the first n characters of a string, and it correctly counts the unicode characters as 1.
+func firstN(s string, n int) string {
+	i := 0
+	for j := range s {
+		if i == n {
+			return s[:j]
+		}
+		i++
+	}
+	return s
 }

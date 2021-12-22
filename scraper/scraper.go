@@ -132,7 +132,7 @@ func parseItem(
 	URL := strings.Split(rawURL, "&amdata")[0]
 
 	if isKnownURL && scraped[searchUrl].URL == URL {
-		log.Println("Found nothing new")
+		log.Println("Stop - Reached a listing that has already been scraped!")
 		return nil, false
 	}
 
@@ -157,7 +157,7 @@ func parseItem(
 	lastScrapedProductDate := scraped[searchUrl].Date.Add(time.Hour * time.Duration(-1))
 	// In case the last scraped product has been deleted, we can still compare the dates
 	if isKnownURL && t.Before(lastScrapedProductDate) {
-		log.Println("Found nothing new")
+		log.Println("Stop - Reached a listing that has an older publication date than the last scraped listing!")
 		return nil, false
 	}
 
@@ -172,7 +172,7 @@ func parseItem(
 		ID:       split[len(split)-1],
 	}
 
-	log.Println("Got listing details")
+	log.Printf("Successfully scraped 1 listing details (ID: %s)\n", listing.ID)
 
 	if !isKnownURL {
 		// This was the first time scraping this searchUrl. As we only want to check for new listings,
