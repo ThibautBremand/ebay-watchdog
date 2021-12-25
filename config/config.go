@@ -2,69 +2,64 @@ package config
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
+	"github.com/joho/godotenv"
+	"github.com/pelletier/go-toml/v2"
+	"io/ioutil"
 	"text/template"
 )
+
+type Config struct {
+	Delay    int
+	Message  string
+	Searches []SearchItem
+}
 
 type SearchItem struct {
 	URL     string
 	Domains []string
 }
 
-// Load loads both the toml config and the .env file.
-func Load() error {
-	err := loadConfig()
+// Load loads the toml config, and the .env file. It returns the Config struct with the values from the toml file.
+func Load() (Config, error) {
+	cfg, err := loadConfig()
 	if err != nil {
-		return err
+		return Config{}, err
 	}
 
-	err = loadEnv(err)
+	err = loadEnv()
 	if err != nil {
-		return err
+		return Config{}, err
 	}
 
-	return nil
-}
-
-// LoadSearchItems loads a list of SearchItem items from the config file.
-func LoadSearchItems() ([]SearchItem, error) {
-	var searchItems []SearchItem
-
-	err := viper.UnmarshalKey("searches", &searchItems)
-	if err != nil {
-		return nil, fmt.Errorf("could not unmarshal searchItems key of config: %v", err)
-	}
-
-	return searchItems, nil
+	return cfg, nil
 }
 
 // LoadTemplate loads the message template from the config file, used for the Telegram messages format.
-func LoadTemplate() (*template.Template, error) {
-	return template.New("message").Parse(viper.GetString("message"))
+func (c Config) LoadTemplate() (*template.Template, error) {
+	return template.New("message").Parse(c.Message)
 }
 
 // loadConfig loads the toml file.
-func loadConfig() error {
-	viper.SetConfigName("config")
-	viper.SetConfigType("toml")
-	viper.AddConfigPath(".")
-
-	err := viper.ReadInConfig()
+func loadConfig() (Config, error) {
+	dat, err := ioutil.ReadFile("config.toml")
 	if err != nil {
-		return fmt.Errorf("could not load config.toml: %v", err)
+		return Config{}, fmt.Errorf("could not read config.toml: %s", err)
 	}
 
-	return nil
+	var cfg Config
+	err = toml.Unmarshal(dat, &cfg)
+	if err != nil {
+		panic(err)
+	}
+
+	return cfg, nil
 }
 
 // loadEnv loads the env file.
-func loadEnv(err error) error {
-	viper.SetConfigFile(".env")
-	viper.AddConfigPath(".")
-
-	err = viper.MergeInConfig()
+func loadEnv() error {
+	err := godotenv.Load()
 	if err != nil {
-		return fmt.Errorf("could not load .env: %v", err)
+		return fmt.Errorf("could not load .env: %s", err)
 	}
 
 	return nil
