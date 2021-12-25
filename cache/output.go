@@ -14,11 +14,7 @@ type CachedListing struct {
 }
 
 // LoadCache loads the cache, from the json file.
-func LoadCache(trackURLs bool) (map[string]CachedListing, error) {
-	if !trackURLs {
-		return map[string]CachedListing{}, nil
-	}
-
+func LoadCache() (map[string]CachedListing, error) {
 	scraped, err := readCache()
 	if err != nil {
 		return nil, fmt.Errorf("error while logging URLs: %v", err)

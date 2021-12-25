@@ -4,7 +4,6 @@ import (
 	"ebay-watchdog/cache"
 	"ebay-watchdog/config"
 	"ebay-watchdog/coordinator"
-	"github.com/spf13/viper"
 	"log"
 	"time"
 )
@@ -12,27 +11,22 @@ import (
 func main() {
 	log.Println("Starting ebay-watchdog")
 
-	err := config.Load()
+	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("error while loading config: %v", err)
 	}
 
-	searchItems, err := config.LoadSearchItems()
-	if err != nil {
-		log.Fatalf("Could not get SearchItem URLs: %v\n", err)
-	}
-
-	tpl, err := config.LoadTemplate()
+	tpl, err := cfg.LoadTemplate()
 	if err != nil {
 		log.Fatalf("Could not parse message template: %v\n", err)
 	}
 
-	scrapedURLs, err := cache.LoadCache(viper.GetBool("track-scraped-urls"))
+	scrapedURLs, err := cache.LoadCache()
 	if err != nil {
 		log.Fatalf("Could not load scraper urls: %v", err)
 	}
 
-	sleepPeriod := time.Duration(viper.GetInt("delay")) * time.Second
+	sleepPeriod := time.Duration(cfg.Delay) * time.Second
 
-	coordinator.Start(searchItems, tpl, scrapedURLs, sleepPeriod)
+	coordinator.Start(cfg.Searches, tpl, scrapedURLs, sleepPeriod)
 }

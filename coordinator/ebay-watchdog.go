@@ -6,8 +6,8 @@ import (
 	"ebay-watchdog/config"
 	"ebay-watchdog/scraper"
 	"ebay-watchdog/web"
-	"github.com/spf13/viper"
 	"log"
+	"os"
 	"strings"
 	"text/template"
 	"time"
@@ -81,8 +81,8 @@ func sendToTelegram(listings []scraper.Listing, tpl *template.Template) {
 		msg = strings.ReplaceAll(msg, `"`, "")
 
 		err = web.SendTelegramMessage(
-			viper.GetString("TELEGRAM_TOKEN"),
-			viper.GetString("TELEGRAM_CHAT_ID"),
+			os.Getenv("TELEGRAM_TOKEN"),
+			os.Getenv("TELEGRAM_CHAT_ID"),
 			msg,
 		)
 		if err != nil {
