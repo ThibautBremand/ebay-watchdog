@@ -19,8 +19,9 @@ func Start(
 	scrapedURLs map[string]cache.CachedListing,
 	sleepPeriod time.Duration,
 ) {
+	searchURLs := buildSearchURLs(searchItems)
 	for {
-		listings, lastItems, err := scraper.Scrape(searchItems, scrapedURLs)
+		listings, lastItems, err := scraper.Scrape(searchURLs, scrapedURLs)
 		if err != nil {
 			log.Println("error while scraping new listings, skipping", err)
 			time.Sleep(sleepPeriod)
@@ -89,4 +90,18 @@ func sendToTelegram(listings []scraper.Listing, tpl *template.Template) {
 			log.Println("could not send Telegram message", err)
 		}
 	}
+}
+
+// buildSearchURLs takes a list []config.SearchItem from the config, and returns a list []scraper.SearchURL directly
+// usable by the scraper.
+func buildSearchURLs(searchItems []config.SearchItem) []scraper.SearchURL {
+	searchURLs := make([]scraper.SearchURL, len(searchItems))
+	for i, s := range searchItems {
+		searchURLs[i] = scraper.SearchURL{
+			URL:     s.URL,
+			Domains: s.Domains,
+		}
+	}
+
+	return searchURLs
 }

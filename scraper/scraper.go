@@ -2,7 +2,6 @@ package scraper
 
 import (
 	"ebay-watchdog/cache"
-	"ebay-watchdog/config"
 	"ebay-watchdog/web"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
@@ -10,6 +9,11 @@ import (
 	"strings"
 	"time"
 )
+
+type SearchURL struct {
+	URL     string
+	Domains []string
+}
 
 type Listing struct {
 	URL      string    `json:"url"`
@@ -20,11 +24,11 @@ type Listing struct {
 	ID       string    `json:"id"`
 }
 
-// Scrape starts the scraping for the given []config.SearchItem.
+// Scrape starts the scraping for the given []scraper.SearchURL.
 // It returns a list of Listing, to be sent to Telegram. It also returns a map[string]Listing which will be used when
 // updating the cache.
 func Scrape(
-	searchItems []config.SearchItem,
+	searchURLs []SearchURL,
 	cache map[string]cache.CachedListing,
 ) (
 	[]Listing,
@@ -32,7 +36,7 @@ func Scrape(
 	error,
 ) {
 	log.Println("Scraping new listings")
-	listings, lastItems, err := scrapeListings(searchItems, cache)
+	listings, lastItems, err := scrapeListings(searchURLs, cache)
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not start scraping: %v", err)
 	}
@@ -42,7 +46,7 @@ func Scrape(
 }
 
 func scrapeListings(
-	searchItems []config.SearchItem,
+	searchURLs []SearchURL,
 	scraped map[string]cache.CachedListing,
 ) (
 	[]Listing,
@@ -54,28 +58,28 @@ func scrapeListings(
 
 	// Keep in memory the id of the parsed listings, so we do not send the same listing twice when checking
 	// multiple domains.
-	currentSearchItems := make(map[string]int)
+	currentSearchURLs := make(map[string]int)
 
-	for _, searchItem := range searchItems {
-		if searchItem.Domains == nil || len(searchItem.Domains) == 0 {
-			domain, err := parseLocDomain(searchItem.URL)
+	for _, searchURL := range searchURLs {
+		if searchURL.Domains == nil || len(searchURL.Domains) == 0 {
+			domain, err := parseLocDomain(searchURL.URL)
 			if err != nil {
-				return nil, nil, fmt.Errorf("could not get domain from url %s: %s", searchItem.URL, err)
+				return nil, nil, fmt.Errorf("could not get domain from url %s: %s", searchURL.URL, err)
 			}
 
-			searchItem.Domains = []string{domain}
+			searchURL.Domains = []string{domain}
 		}
 
-		for _, domain := range searchItem.Domains {
-			searchUrl, err := setDomain(searchItem.URL, domain)
+		for _, domain := range searchURL.Domains {
+			searchUrl, err := setDomain(searchURL.URL, domain)
 			if err != nil {
-				return nil, nil, fmt.Errorf("could not set domain %s for url %s: %s", domain, searchItem.URL, err)
+				return nil, nil, fmt.Errorf("could not set domain %s for url %s: %s", domain, searchURL.URL, err)
 			}
 
 			log.Printf("Searching with url %s (domain %s)\n", searchUrl, domain)
 			doc, err := web.Get(searchUrl)
 			if err != nil {
-				log.Println("could not make request to SearchItem page", err)
+				log.Printf("could not make request to search URL page %s: %s\n", searchURL, err)
 				continue
 			}
 
@@ -84,9 +88,9 @@ func scrapeListings(
 			doc.Find("div.s-item__info").EachWithBreak(func(i int, sel *goquery.Selection) bool {
 				listing, b := parseItem(sel, scraped, searchUrl)
 				if listing != nil {
-					_, isKnownID := currentSearchItems[listing.ID]
+					_, isKnownID := currentSearchURLs[listing.ID]
 					if !isKnownID {
-						currentSearchItems[listing.ID] = 1
+						currentSearchURLs[listing.ID] = 1
 						pulledListings = append(pulledListings, *listing)
 					}
 
