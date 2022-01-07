@@ -75,8 +75,6 @@ If you do not set domains, only the provided url will be scraped as usual.
 
 Other parameters:  
 - `delay`: period, in seconds, between two scraping loops. Keep it reasonably high.
-- `track-scraped-urls`: if set to `true`, read the cache from `scraped.json` at the beginning of the program. If set to
-`false`, ignore the cache.
 
 ### Telegram and .env
 - First, you need to create a [Telegram account](https://desktop.telegram.org/).
