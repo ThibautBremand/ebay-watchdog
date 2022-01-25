@@ -71,22 +71,33 @@ func scrapeListings(
 		}
 
 		for _, domain := range searchURL.Domains {
-			searchUrl, err := setDomain(searchURL.URL, domain)
+			URL, err := setDomain(searchURL.URL, domain)
 			if err != nil {
 				return nil, nil, fmt.Errorf("could not set domain %s for url %s: %s", domain, searchURL.URL, err)
 			}
 
-			log.Printf("Searching with url %s (domain %s)\n", searchUrl, domain)
-			doc, err := web.Get(searchUrl)
+			log.Printf("Searching with url %s (domain %s)\n", URL, domain)
+			doc, err := web.Get(URL)
 			if err != nil {
-				log.Printf("could not make request to search URL page %s: %s\n", searchURL, err)
+				log.Printf("could not make request to search URL page %s: %s\n", URL, err)
+				continue
+			}
+
+			if doc == nil {
+				log.Printf("received an empty result for URL %s, skipping...\n", URL)
 				continue
 			}
 
 			isFirst := true
 
-			doc.Find("div.s-item__info").EachWithBreak(func(i int, sel *goquery.Selection) bool {
-				listing, b := parseItem(sel, scraped, searchUrl)
+			itemInfoList := doc.Find("div.s-item__info")
+			if itemInfoList == nil {
+				log.Printf("received zero items for URL %s, skipping...\n", searchURL)
+				continue
+			}
+
+			itemInfoList.EachWithBreak(func(i int, sel *goquery.Selection) bool {
+				listing, b := parseItem(sel, scraped, URL)
 				if listing != nil {
 					_, isKnownID := currentSearchURLs[listing.ID]
 					if !isKnownID {
@@ -95,7 +106,7 @@ func scrapeListings(
 					}
 
 					if isFirst {
-						lastItems[searchUrl] = *listing
+						lastItems[URL] = *listing
 
 						isFirst = false
 					}
