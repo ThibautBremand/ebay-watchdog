@@ -83,9 +83,20 @@ func scrapeListings(
 				continue
 			}
 
+			if doc == nil {
+				log.Printf("received an empty result for URL %s, skipping...\n", searchURL)
+				continue
+			}
+
 			isFirst := true
 
-			doc.Find("div.s-item__info").EachWithBreak(func(i int, sel *goquery.Selection) bool {
+			itemInfoList := doc.Find("div.s-item__info")
+			if itemInfoList == nil {
+				log.Printf("received zero items for URL %s, skipping...\n", searchURL)
+				continue
+			}
+
+			itemInfoList.EachWithBreak(func(i int, sel *goquery.Selection) bool {
 				listing, b := parseItem(sel, scraped, searchUrl)
 				if listing != nil {
 					_, isKnownID := currentSearchURLs[listing.ID]
