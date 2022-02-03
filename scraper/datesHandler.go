@@ -44,18 +44,21 @@ func parseDate(str string, URL string) (time.Time, error) {
 		month = temp
 	}
 
-	if len(month) > 3 {
-		month = firstN(month, 3)
-	}
-
 	if len(day) > 2 {
 		day = firstN(day, 2)
 	}
 
+	locDomain, err := parseLocDomain(URL)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("could not parse location domain from URL %s: %s", URL, err)
+	}
+
+	month = formatDirtyMonth(locDomain, month)
+
 	year, _, _ := time.Now().Date()
 	fullDate := fmt.Sprintf("%s %s %d %s", day, month, year, hours)
 
-	t, err := parseDateByLocDomain(fullDate, URL)
+	t, err := parseDateByLocDomain(fullDate, locDomain)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("error while parsing date %s: %v", str, err)
 	}
@@ -63,15 +66,10 @@ func parseDate(str string, URL string) (time.Time, error) {
 	return t, nil
 }
 
-// parseDateByLocDomain returns the time.Time from the given date as string and the given listing URL.
+// parseDateByLocDomain returns the time.Time from the given date as string and the given location domain.
 // The listing URL is used in order to detect and corresponding location (US, UK, FR, etc) and parse the date
 // accordingly.
-func parseDateByLocDomain(date string, URL string) (time.Time, error) {
-	locDomain, err := parseLocDomain(URL)
-	if err != nil {
-		return time.Time{}, fmt.Errorf("could not parse location domain from URL %s: %s", URL, err)
-	}
-
+func parseDateByLocDomain(date string, locDomain string) (time.Time, error) {
 	var locale monday.Locale
 	switch locDomain {
 	case "com", "ca", "com.au", "com.sg", "com.my", "ph":
@@ -105,6 +103,19 @@ func parseDateByLocDomain(date string, URL string) (time.Time, error) {
 	}
 
 	return t, nil
+}
+
+// formatDirtyMonth manipulates the month for some specific location domains, and returns the new formatted month.
+func formatDirtyMonth(locDomain string, month string) string {
+	if locDomain == "fr" && len(month) > 1 && month[len(month)-1:] == "." {
+		month = firstN(month, len(month)-2)
+	}
+
+	if locDomain == "de" && len(month) > 1 && month[len(month)-1:] == "." {
+		month = firstN(month, len(month)-1)
+	}
+
+	return month
 }
 
 // firstN returns the first n characters of a string, and it correctly counts the unicode characters as 1.
