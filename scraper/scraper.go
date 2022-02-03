@@ -90,7 +90,13 @@ func scrapeListings(
 
 			isFirst := true
 
-			itemInfoList := doc.Find("div.s-item__info")
+			riverResults := doc.Find("div#srp-river-results")
+			if riverResults == nil {
+				log.Printf("could not find srp-river-results div for URL %s, skipping...\n", searchURL)
+				continue
+			}
+
+			itemInfoList := riverResults.Find("div.s-item__info")
 			if itemInfoList == nil {
 				log.Printf("received zero items for URL %s, skipping...\n", searchURL)
 				continue
