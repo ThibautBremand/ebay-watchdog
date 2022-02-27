@@ -10,9 +10,17 @@ import (
 	"time"
 )
 
+type Scraper struct {
+	URLs []SearchURL
+}
+
 type SearchURL struct {
 	URL     string
 	Domains []string
+}
+
+func NewScraper(URLs []SearchURL) *Scraper {
+	return &Scraper{URLs: URLs}
 }
 
 type Listing struct {
@@ -27,8 +35,7 @@ type Listing struct {
 // Scrape starts the scraping for the given []scraper.SearchURL.
 // It returns a list of Listing, to be sent to Telegram. It also returns a map[string]Listing which will be used when
 // updating the cache.
-func Scrape(
-	searchURLs []SearchURL,
+func (s *Scraper) Scrape(
 	cache map[string]cache.CachedListing,
 ) (
 	[]Listing,
@@ -36,7 +43,7 @@ func Scrape(
 	error,
 ) {
 	log.Println("Scraping new listings")
-	listings, lastItems, err := scrapeListings(searchURLs, cache)
+	listings, lastItems, err := scrapeListings(s.URLs, cache)
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not start scraping: %v", err)
 	}
