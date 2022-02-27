@@ -13,18 +13,35 @@ import (
 	"time"
 )
 
-func Start(
+type Coordinator struct {
+	Scraper     *scraper.Scraper
+	SleepPeriod time.Duration
+	Tpl         *template.Template
+}
+
+func NewCoordinator(
 	searchItems []config.SearchItem,
-	tpl *template.Template,
-	scrapedURLs map[string]cache.CachedListing,
 	sleepPeriod time.Duration,
-) {
+	tpl *template.Template,
+) *Coordinator {
 	searchURLs := buildSearchURLs(searchItems)
+	s := scraper.NewScraper(searchURLs)
+
+	return &Coordinator{
+		Scraper:     s,
+		SleepPeriod: sleepPeriod,
+		Tpl:         tpl,
+	}
+}
+
+func (c *Coordinator) Start(
+	scrapedURLs map[string]cache.CachedListing,
+) {
 	for {
-		listings, lastItems, err := scraper.Scrape(searchURLs, scrapedURLs)
+		listings, lastItems, err := c.Scraper.Scrape(scrapedURLs)
 		if err != nil {
 			log.Println("error while scraping new listings, skipping", err)
-			time.Sleep(sleepPeriod)
+			time.Sleep(c.SleepPeriod)
 			continue
 		}
 
@@ -35,9 +52,9 @@ func Start(
 			log.Println("error while updating scraped URLs, skipping", err)
 		}
 
-		sendToTelegram(listings, tpl)
+		sendToTelegram(listings, c.Tpl)
 
-		time.Sleep(sleepPeriod)
+		time.Sleep(c.SleepPeriod)
 	}
 
 }

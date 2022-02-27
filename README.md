@@ -52,7 +52,7 @@ countries.
 If you do not set domains, only the provided url will be scraped as usual.
 
 #### Important notes
-- You need to use urls with the **Time: newly listed** enabled, e.g. urls ending with `&_sop=10`.
+- You need to use urls with the **Time: newly listed** enabled, e.g. urls ending with `&_sop=10`. That way, new listings will be detected at the top of the results list.
 - You need to use the following urls and domains since these are the only domains that are handled by the program at the 
   moment.
   - ebay.at
