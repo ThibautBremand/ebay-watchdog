@@ -28,5 +28,6 @@ func main() {
 
 	sleepPeriod := time.Duration(cfg.Delay) * time.Second
 
-	coordinator.Start(cfg.Searches, tpl, scrapedURLs, sleepPeriod)
+	c := coordinator.NewCoordinator(cfg.Searches, sleepPeriod, tpl)
+	c.Start(scrapedURLs)
 }
