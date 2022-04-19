@@ -108,11 +108,11 @@ func parseDateByLocDomain(date string, locDomain string) (time.Time, error) {
 // formatDirtyMonth manipulates the month for some specific location domains, and returns the new formatted month.
 func formatDirtyMonth(locDomain string, month string) string {
 	if locDomain == "fr" && len(month) > 1 && month[len(month)-1:] == "." {
-		month = firstN(month, len(month)-2)
+		month = firstN(month, 3)
 	}
 
 	if locDomain == "de" && len(month) > 1 && month[len(month)-1:] == "." {
-		month = firstN(month, len(month)-1)
+		month = firstN(month, 3)
 	}
 
 	return month
