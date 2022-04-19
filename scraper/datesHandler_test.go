@@ -46,6 +46,18 @@ func TestParseDate(t *testing.T) {
 		if exp != got {
 			t.Errorf("expected %v but got %v", exp, got)
 		}
+
+		str = "avr.-17 21:08"
+		listingURL = "https://www.ebay.fr/itm/393802831789?hash=item5bb07a57ad:g:q1MAAOSwCRthvdNa"
+		got, err = parseDate(str, listingURL)
+		if err != nil {
+			t.Errorf("error while parsing date: %v", err)
+		}
+
+		exp = time.Date(time.Now().Year(), 4, 17, 21, 8, 00, 0, time.Local)
+		if exp != got {
+			t.Errorf("expected %v but got %v", exp, got)
+		}
 	})
 
 	t.Run("DE format", func(t *testing.T) {
